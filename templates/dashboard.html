@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elliott Wave Bot - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .status-running {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-stopped {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-card .subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .signals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .signals-table th,
+        .signals-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .signals-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .signals-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-buy {
+            background: #10b981;
+            color: white;
+        }
+        
+        .badge-sell {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .badge-quality-a {
+            background: #10b981;
+            color: white;
+        }
+        
+        .badge-quality-b {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .badge-quality-c {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 Elliott Wave Bot Dashboard</h1>
+            <div id="bot-status">
+                <span class="status-badge status-stopped">Загрузка...</span>
+            </div>
+            <button class="refresh-btn" onclick="loadAllData()">🔄 Обновить</button>
+        </div>
+        
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <h3>Всего сигналов</h3>
+                <div class="value" id="total-signals">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>BUY сигналы</h3>
+                <div class="value" id="buy-signals">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>SELL сигналы</h3>
+                <div class="value" id="sell-signals">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Среднее качество</h3>
+                <div class="value" id="avg-quality">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Категория A</h3>
+                <div class="value" id="category-a">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Категория B</h3>
+                <div class="value" id="category-b">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Категория C</h3>
+                <div class="value" id="category-c">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Размер кэша</h3>
+                <div class="value" id="cache-size">-</div>
+                <div class="subtitle" id="cache-info"></div>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <div class="panel">
+                <h2>📊 Последние сигналы</h2>
+                <div id="signals-container">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>⚙️ Конфигурация</h2>
+                <div id="config-container">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function fetchAPI(endpoint) {
+            try {
+                const response = await fetch(`/api/${endpoint}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Ошибка загрузки ${endpoint}:`, error);
+                return null;
+            }
+        }
+        
+        function formatTime(timeStr) {
+            if (!timeStr) return '-';
+            try {
+                // Пробуем разные форматы времени
+                let timestamp = timeStr;
+                
+                // Если это число (миллисекунды)
+                if (/^\d+$/.test(timeStr)) {
+                    timestamp = parseInt(timeStr);
+                    // Если число маленькое, возможно это секунды
+                    if (timestamp < 10000000000) {
+                        timestamp = timestamp * 1000;
+                    }
+                } else {
+                    // Пробуем как строку даты
+                    timestamp = new Date(timeStr).getTime();
+                }
+                
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) {
+                    return timeStr; // Если не удалось распарсить, возвращаем как есть
+                }
+                return date.toLocaleString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            } catch {
+                return timeStr;
+            }
+        }
+        
+        function getQualityBadge(quality) {
+            const q = parseInt(quality) || 0;
+            if (q >= 85) return '<span class="badge badge-quality-a">A</span>';
+            if (q >= 70) return '<span class="badge badge-quality-b">B</span>';
+            if (q >= 60) return '<span class="badge badge-quality-c">C</span>';
+            return '<span class="badge">-</span>';
+        }
+        
+        async function loadStatistics() {
+            const stats = await fetchAPI('statistics');
+            if (!stats) return;
+            
+            document.getElementById('total-signals').textContent = stats.total_signals || 0;
+            document.getElementById('buy-signals').textContent = stats.buy_signals || 0;
+            document.getElementById('sell-signals').textContent = stats.sell_signals || 0;
+            document.getElementById('avg-quality').textContent = stats.avg_quality ? stats.avg_quality.toFixed(1) : '-';
+            document.getElementById('category-a').textContent = stats.signals_by_category?.A || 0;
+            document.getElementById('category-b').textContent = stats.signals_by_category?.B || 0;
+            document.getElementById('category-c').textContent = stats.signals_by_category?.C || 0;
+        }
+        
+        async function loadSignals() {
+            const signals = await fetchAPI('signals?limit=20');
+            if (!signals || signals.length === 0) {
+                document.getElementById('signals-container').innerHTML = '<div class="loading">Нет сигналов</div>';
+                return;
+            }
+            
+            let html = '<table class="signals-table"><thead><tr><th>Время</th><th>Направление</th><th>Качество</th><th>Вход</th><th>TP1</th><th>SL</th></tr></thead><tbody>';
+            
+            signals.forEach(signal => {
+                const direction = signal.direction || '-';
+                const directionBadge = direction === 'BUY' 
+                    ? '<span class="badge badge-buy">BUY</span>'
+                    : '<span class="badge badge-sell">SELL</span>';
+                
+                html += `<tr>
+                    <td>${formatTime(signal.time)}</td>
+                    <td>${directionBadge}</td>
+                    <td>${getQualityBadge(signal.quality)} ${signal.quality || '-'}</td>
+                    <td>${signal.entry || '-'}</td>
+                    <td>${signal.tp1 || '-'}</td>
+                    <td>${signal.sl || '-'}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('signals-container').innerHTML = html;
+        }
+        
+        async function loadConfig() {
+            const config = await fetchAPI('config');
+            if (!config) {
+                document.getElementById('config-container').innerHTML = '<div class="error">Ошибка загрузки</div>';
+                return;
+            }
+            
+            let html = '<div style="line-height: 2;">';
+            html += `<div><strong>Пара:</strong> ${config.pair || '-'}</div>`;
+            html += `<div><strong>Таймфрейм:</strong> ${config.timeframe || '-'}</div>`;
+            html += `<div><strong>Multi-TF:</strong> ${config.multi_tf ? 'Да' : 'Нет'}</div>`;
+            if (config.multi_timeframes) {
+                html += `<div><strong>Таймфреймы:</strong> ${config.multi_timeframes.join(', ')}</div>`;
+            }
+            html += `<div><strong>Порог качества:</strong> ${config.quality_threshold || '-'}</div>`;
+            html += `<div><strong>Мин. качество для отправки:</strong> ${config.min_send_quality || '-'}</div>`;
+            html += `<div><strong>ATR цели:</strong> ${config.use_atr_targets ? 'Да' : 'Нет'}</div>`;
+            html += '</div>';
+            
+            document.getElementById('config-container').innerHTML = html;
+        }
+        
+        async function loadBotStatus() {
+            const status = await fetchAPI('bot/status');
+            if (!status) return;
+            
+            const badge = status.running 
+                ? '<span class="status-badge status-running">🟢 Работает</span>'
+                : '<span class="status-badge status-stopped">🔴 Остановлен</span>';
+            
+            document.getElementById('bot-status').innerHTML = badge;
+        }
+        
+        async function loadCacheStats() {
+            const cache = await fetchAPI('cache/stats');
+            if (!cache) return;
+            
+            document.getElementById('cache-size').textContent = cache.size || 0;
+            document.getElementById('cache-info').textContent = `Макс: ${cache.max_size || 0}, TTL: ${cache.ttl_seconds || 0}с`;
+        }
+        
+        async function loadAllData() {
+            await Promise.all([
+                loadStatistics(),
+                loadSignals(),
+                loadConfig(),
+                loadBotStatus(),
+                loadCacheStats()
+            ]);
+        }
+        
+        // Загрузка при старте
+        loadAllData();
+        
+        // Автообновление каждые 60 секунд (увеличено для снижения нагрузки)
+        setInterval(loadAllData, 60000);
+    </script>
+</body>
+</html>
+

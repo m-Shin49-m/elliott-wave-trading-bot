@@ -1,0 +1,61 @@
+# Чувствительные данные
+config.py
+*.env
+.env
+*.key
+*.pem
+
+# Логи и временные файлы
+*.log
+*.lock
+bot_output.log
+elliott_bot.log
+*.backup*
+
+# Данные и модели
+signals_history.csv
+signals_history.csv.backup
+prob_model.json
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Резервные копии
+*.backup
+*.bak
+*.old
+
+# Скрипты развертывания (могут содержать пароли)
+*.sh
+*.bat
+*.service
+*.timer
+
+# Документация с чувствительными данными
+*_INFO.md
+*_SETUP.md
